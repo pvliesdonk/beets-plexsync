@@ -67,13 +67,13 @@ class PlexSync(BeetsPlugin):
         try:
             self.setup_google_ai()
         except Exception as e:
-            print(f"Failed to set up Google AI: {e}")
+            self._log.warning(f"Failed to set up Google AI: {e}")
             self.google = None
 
         try:
             self.setup_openai_api()
         except Exception as e:
-            print(f"Failed to set up OpenAI API: {e}")
+            self._log.warning(f"Failed to set up OpenAI API: {e}")
             self.openai = None
 
         # Adding defaults.
@@ -684,6 +684,7 @@ class PlexSync(BeetsPlugin):
 
     def search_plex_track(self, item):
         """Fetch the Plex track key."""
+        
         tracks = self.music.searchTracks(
             **{"album.title": item.album, "track.title": item.title}
         )
@@ -694,6 +695,13 @@ class PlexSync(BeetsPlugin):
                 if track.parentTitle == item.album and track.title == item.title:
                     return track
         else:
+            self._log.debug(f"Searching for tracks with path: '{item.path.decode()}' in library '{self.music.title}'")
+            for album in self.music.albums():
+                for track in album.tracks():
+                    if item.path.decode() in track.locations:
+                        self._log.info(f"Found track: {track}")
+                        return track
+        
             self._log.debug("Track {} not found in Plex library", item)
             return None
 
